@@ -658,3 +658,103 @@ int main() {
     printf("File Permissions: %o\n", st.st_mode & 0777);
     return 0;
 }
+
+
+1. Create Process and Display Process IDs  (O)
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+int main() {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("Fork failed");
+        return 1;
+    }
+    if (pid == 0) {
+        printf("Child Process ID: %d, Parent ID: %d\n", getpid(), getppid());
+    } else {
+        printf("Parent Process ID: %d\n", getpid());
+    }
+    return 0;
+}
+
+2. Illustrate Multithreading
+
+#include <stdio.h>
+#include <pthread.h>
+
+void* threadFunction(void* arg) {
+    printf("Thread %d is running\n", *(int*)arg);
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[3];
+    int thread_ids[3] = {1, 2, 3};
+
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&threads[i], NULL, threadFunction, &thread_ids[i]);
+    }
+    for (int i = 0; i < 3; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    return 0;
+}
+
+3. Worst Fit Memory Management
+#include <stdio.h>
+
+void worstFit(int b[], int m, int p[], int n) {
+    for (int i = 0, a; i < n; i++) {
+        a = -1;
+        for (int j = 0; j < m; j++) 
+            if (b[j] >= p[i] && (a == -1 || b[j] > b[a])) 
+                a = j;
+        if (a != -1) b[a] -= p[i];
+        printf("Process %d (%d): %s\n", i + 1, p[i], a != -1 ? "Allocated" : "Not Allocated");
+    }
+}
+
+int main() {
+    int b[] = {100, 500, 200, 300, 600}, p[] = {212, 417, 112, 426};
+    worstFit(b, 5, p, 4);
+    return 0;
+}
+
+
+4.Dining Philosophers Problem
+
+#include <stdio.h>
+#include <windows.h>
+
+HANDLE forks[5];
+
+DWORD WINAPI philosopher(LPVOID id) {
+    int phil = *(int*)id;
+    while (1) {
+        printf("Philosopher %d is thinking\n", phil);
+        Sleep(1000);  // Simulate thinking time
+        WaitForSingleObject(forks[phil], INFINITE);
+        WaitForSingleObject(forks[(phil + 1) % 5], INFINITE);
+        printf("Philosopher %d is eating\n", phil);
+        Sleep(1000);  // Simulate eating time
+        ReleaseMutex(forks[(phil + 1) % 5]);
+        ReleaseMutex(forks[phil]);
+    }
+    return 0;
+}
+
+int main() {
+    HANDLE threads[5];
+    int ids[5] = {0, 1, 2, 3, 4};
+    for (int i = 0; i < 5; i++) forks[i] = CreateMutex(NULL, FALSE, NULL);
+    for (int i = 0; i < 5; i++) threads[i] = CreateThread(NULL, 0, philosopher, &ids[i], 0, NULL);
+    WaitForMultipleObjects(5, threads, TRUE, INFINITE);
+    return 0;
+}
+
+
+
+
